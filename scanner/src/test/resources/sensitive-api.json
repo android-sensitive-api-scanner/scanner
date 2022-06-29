@@ -1,0 +1,26 @@
+[
+  {
+    "owner": "android.telephony.TelephonyManager",
+    "descriptor": "getImei()Ljava/lang/String;"
+  },
+  {
+    "owner": "android.telephony.TelephonyManager",
+    "descriptor": "getImei(I)Ljava/lang/String;"
+  },
+  {
+    "owner": "android.telephony.TelephonyManager",
+    "descriptor": "getDeviceId()Ljava/lang/String;"
+  },
+  {
+    "owner": "android.telephony.TelephonyManager",
+    "descriptor": "getDeviceId(I)Ljava/lang/String;"
+  },
+  {
+    "owner": "android.telephony.TelephonyManager",
+    "descriptor": "getMeid()Ljava/lang/String;"
+  },
+  {
+    "owner": "android.telephony.TelephonyManager",
+    "descriptor": "getMeid(I)Ljava/lang/String;"
+  }
+]
