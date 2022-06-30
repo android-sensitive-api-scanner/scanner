@@ -1,6 +1,6 @@
 package io.github.porum.asas
 
-data class TargetMethod(
+data class BriefMethod(
     val owner: String,
     val descriptor: String,
 ) {
@@ -8,7 +8,7 @@ data class TargetMethod(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as TargetMethod
+        other as BriefMethod
 
         if (owner != other.owner) return false
         if (descriptor != other.descriptor) return false
