@@ -10,7 +10,7 @@ dependencies {
     implementation(project(":jadx-core"))
     implementation(project(":mapping-parser"))
 
-    runtimeOnly(project(":jadx-dex-input"))
+    implementation(project(":jadx-dex-input"))
 
     implementation("com.google.code.gson:gson:2.9.0")
     implementation("com.beust:jcommander:1.82")
@@ -33,7 +33,16 @@ tasks.withType<Jar> {
 //        attributes["Class-Path"] = configurations.runtimeClasspath.get().files.map { it.name }.joinToString { " " }
     }
 
-    configurations.compileClasspath.get().files.filter { it.exists() }.forEach { file: File ->
+//    configurations.compileClasspath.get().files.filter { it.exists() }.forEach { file: File ->
+//        if (file.isDirectory) {
+//            from(file)
+//        } else {
+//            from(zipTree(file.absoluteFile))
+//        }
+//    }
+
+    configurations.runtimeClasspath.get().files.filter { it.exists() }.forEach { file: File ->
+        println(file)
         if (file.isDirectory) {
             from(file)
         } else {
