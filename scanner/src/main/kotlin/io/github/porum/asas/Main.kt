@@ -2,7 +2,8 @@ package io.github.porum.asas
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import io.github.porum.mapping.*
+import io.github.porum.mapping.MappedArchive
+import io.github.porum.mapping.Parsers
 import jadx.api.JadxArgs
 import jadx.api.JadxArgs.RenameEnum
 import jadx.api.plugins.JadxPluginManager
@@ -31,11 +32,11 @@ import kotlin.system.exitProcess
 
 private const val TAB = "   "
 
-private lateinit var mappings: MappedArchive
-private lateinit var sensitives: List<TargetMethod>
+private var mappings: MappedArchive? = null
+private lateinit var sensitives: List<BriefMethod>
 
-private val refChainList: MutableList<Pair<String, MappedMethod>> = ArrayList()
 private val foundInsnNodeList: MutableList<InsnNode> = ArrayList()
+private val callChainList: MutableList<BriefMethod> = ArrayList()
 
 fun main(vararg args: String) {
     var result = 0
@@ -79,10 +80,8 @@ private fun process(cmdArgs: CmdArgs): Int {
     val set = ClsSet(root)
     set.loadFrom(root)
 
-    // loading mapping
-    mappings = Parsers[Parsers.PRO_GUARD]?.parse(File(cmdArgs.mappingFile).toURI()) ?: return 1
     // loading sensitive api config
-    sensitives = Gson().fromJson(File(cmdArgs.sensitiveApiConfig).bufferedReader(), object : TypeToken<List<TargetMethod>>() {}.type)
+    sensitives = Gson().fromJson(File(cmdArgs.sensitiveApiConfig).bufferedReader(), object : TypeToken<List<BriefMethod>>() {}.type)
 
     for (method in sensitives) {
         search(root.classes, method, method)
@@ -95,8 +94,8 @@ private fun process(cmdArgs: CmdArgs): Int {
 
 private var found = false
 
-private fun search(classes: List<ClassNode>, targetNode: TargetMethod, leafNode: TargetMethod) {
-    var targetParentNode: TargetMethod? = null
+private fun search(classes: List<ClassNode>, targetNode: BriefMethod, leafNode: BriefMethod) {
+    var targetParentNode: BriefMethod? = null
     classes@ for (clsNode in classes) {
         methods@ for (methodNode in clsNode.methods) {
             if (methodNode.instructions == null) continue
@@ -104,22 +103,18 @@ private fun search(classes: List<ClassNode>, targetNode: TargetMethod, leafNode:
                 if (insnNode?.type != InsnType.INVOKE) continue
                 if (foundInsnNodeList.contains(insnNode)) continue@methods
                 val callMth: MethodInfo = (insnNode as InvokeNode).callMth
-                val mappedClass: MappedClass = mappings.classes.getByFake(callMth.declClass.rawName) ?: continue
-                if (mappedClass.realName != targetNode.owner) continue
-                val mappedMethod: MappedMethod = mappedClass.methods.getByFake(callMth.getDescriptor()) ?: continue
-                if (mappedMethod.realDescriptor() != targetNode.descriptor) continue
+                val cls = callMth.declClass.rawName
+                if (cls != targetNode.owner || callMth.shortId != targetNode.descriptor) continue
                 if (targetNode == leafNode) {
                     found = true
                     foundInsnNodeList.add(insnNode)
-                    refChainList.add(Pair(mappedClass.realName, mappedMethod))
+                    callChainList.add(leafNode)
                 }
-                val parentNodeMappedClass = mappings.classes.getByFake(methodNode.methodInfo.declClass.rawName) ?: break@classes
-                val parentNodeMappedMethod = parentNodeMappedClass.methods.getByFake(methodNode.methodInfo.getDescriptor()) ?: break@classes
-                targetParentNode = TargetMethod(
-                    parentNodeMappedClass.realName,
-                    parentNodeMappedMethod.realDescriptor()
+                targetParentNode = BriefMethod(
+                    methodNode.methodInfo.declClass.rawName,
+                    methodNode.methodInfo.shortId,
                 )
-                refChainList.add(Pair(parentNodeMappedClass.realName, parentNodeMappedMethod))
+                callChainList.add(targetParentNode)
                 break@classes
             }
         }
@@ -134,43 +129,28 @@ private fun search(classes: List<ClassNode>, targetNode: TargetMethod, leafNode:
 }
 
 private fun output(cmdArgs: CmdArgs) {
+    // loading mapping
+    val mappingFile = cmdArgs.mappingFile
+    if (mappingFile != null) {
+        mappings = Parsers[Parsers.PRO_GUARD]?.parse(File(mappingFile).toURI())
+    }
+
     val outputFile = File(cmdArgs.outputDir, "output_${System.currentTimeMillis()}.txt")
     BufferedWriter(FileWriter(outputFile, false)).use { writer ->
         var depth = 0
-        for (i in refChainList.size - 1 downTo 0) {
-            val className = refChainList[i].first
-            val mappedMethod = refChainList[i].second
-            writer.appendLine(TAB.repeat(depth++) + "$className.${mappedMethod.realDescriptor()}")
-            val isLeaf = sensitives.any { it.owner == className && it.descriptor == mappedMethod.realDescriptor() }
-            if (isLeaf) {
+        for (i in callChainList.size - 1 downTo 0) {
+            val method = callChainList[i]
+            val isLeaf = sensitives.any { it.owner == method.owner && it.descriptor == method.descriptor }
+            if (!isLeaf) {
+                val mappedClass = mappings?.classes?.getByFake(method.owner)
+                val owner = mappedClass?.realName ?: method.owner
+                val descriptor = mappedClass?.methods?.getByFake(method.descriptor)?.realName ?: method.descriptor
+                writer.appendLine(TAB.repeat(depth++) + "$owner.$descriptor")
+            } else {
+                writer.appendLine(TAB.repeat(depth) + "${method.owner}.${method.descriptor}")
                 writer.appendLine()
                 depth = 0
             }
         }
     }
-}
-
-private fun MethodInfo.getDescriptor(): String {
-    val sb = StringBuilder()
-    sb.append(name)
-    sb.append('(')
-    for (arg in argumentsTypes) {
-        sb.append(arg.signature())
-    }
-    sb.append(')')
-    if (returnType != null) {
-        sb.append(returnType.signature())
-    }
-    return sb.toString()
-}
-
-private fun ArgType.signature(): String? {
-    if (primitiveType == PrimitiveType.OBJECT) {
-        val obj = getObject()
-        val originalObject = mappings.classes.getByFake(obj)?.realName ?: obj
-        return Utils.makeQualifiedObjectName(originalObject)
-    }
-    return if (primitiveType == PrimitiveType.ARRAY) {
-        '['.toString() + arrayElement.signature()
-    } else primitiveType.shortName
 }

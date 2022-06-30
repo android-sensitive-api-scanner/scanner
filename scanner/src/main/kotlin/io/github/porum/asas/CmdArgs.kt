@@ -8,7 +8,7 @@ class CmdArgs {
     lateinit var inputFile: String
 
     @Parameter(names = ["-mapping"], description = "mapping file")
-    lateinit var mappingFile: String
+    var mappingFile: String? = null
 
     @Parameter(names = ["-json"], description = "sensitive api config")
     lateinit var sensitiveApiConfig: String
