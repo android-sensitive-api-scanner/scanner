@@ -12,13 +12,10 @@ import jadx.core.clsp.ClsSet
 import jadx.core.dex.info.MethodInfo
 import jadx.core.dex.instructions.InsnType
 import jadx.core.dex.instructions.InvokeNode
-import jadx.core.dex.instructions.args.ArgType
-import jadx.core.dex.instructions.args.PrimitiveType
 import jadx.core.dex.nodes.ClassNode
 import jadx.core.dex.nodes.InsnNode
 import jadx.core.dex.nodes.RootNode
 import jadx.core.dex.visitors.SignatureProcessor
-import jadx.core.utils.Utils
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -98,13 +95,13 @@ private fun search(classes: List<ClassNode>, targetNode: BriefMethod, leafNode: 
     var targetParentNode: BriefMethod? = null
     classes@ for (clsNode in classes) {
         methods@ for (methodNode in clsNode.methods) {
-            if (methodNode.instructions == null) continue
-            for (insnNode in methodNode.instructions) {
-                if (insnNode?.type != InsnType.INVOKE) continue
+            if (methodNode.instructions == null) continue@methods
+            instructions@ for (insnNode in methodNode.instructions) {
+                if (insnNode?.type != InsnType.INVOKE) continue@instructions
                 if (foundInsnNodeList.contains(insnNode)) continue@methods
                 val callMth: MethodInfo = (insnNode as InvokeNode).callMth
                 val cls = callMth.declClass.rawName
-                if (cls != targetNode.owner || callMth.shortId != targetNode.descriptor) continue
+                if (cls != targetNode.owner || callMth.shortId != targetNode.descriptor) continue@instructions
                 if (targetNode == leafNode) {
                     found = true
                     foundInsnNodeList.add(insnNode)
@@ -114,6 +111,10 @@ private fun search(classes: List<ClassNode>, targetNode: BriefMethod, leafNode: 
                     methodNode.methodInfo.declClass.rawName,
                     methodNode.methodInfo.shortId,
                 )
+                if (targetParentNode == targetNode) {
+                    targetParentNode = null
+                    break@classes
+                }
                 callChainList.add(targetParentNode)
                 break@classes
             }
