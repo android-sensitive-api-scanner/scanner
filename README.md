@@ -13,3 +13,5 @@ options:
 Examples:
   java -jar asas.jar -json sensitive-api-config.json -mapping mapping.txt -d out sample.apk
 ```
+
+sensitive api config format look at [here](https://github.com/porum/android-sensitive-api-scanner/blob/master/scanner/src/test/resources/sensitive-api.json).
