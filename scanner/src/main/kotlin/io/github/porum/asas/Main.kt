@@ -9,7 +9,9 @@ import jadx.api.JadxArgs.RenameEnum
 import jadx.api.plugins.JadxPluginManager
 import jadx.api.plugins.input.data.ILoadResult
 import jadx.core.clsp.ClsSet
+import jadx.core.dex.info.FieldInfo
 import jadx.core.dex.info.MethodInfo
+import jadx.core.dex.instructions.IndexInsnNode
 import jadx.core.dex.instructions.InsnType
 import jadx.core.dex.instructions.InvokeNode
 import jadx.core.dex.nodes.ClassNode
@@ -30,10 +32,10 @@ import kotlin.system.exitProcess
 private const val TAB = "   "
 
 private var mappings: MappedArchive? = null
-private lateinit var sensitives: List<BriefMethod>
+private lateinit var sensitives: List<Node>
 
 private val foundInsnNodeList: MutableList<InsnNode> = ArrayList()
-private val callChainList: MutableList<BriefMethod> = ArrayList()
+private val callChainList: MutableList<Node> = ArrayList()
 
 fun main(vararg args: String) {
     var result = 0
@@ -78,10 +80,10 @@ private fun process(cmdArgs: CmdArgs): Int {
     set.loadFrom(root)
 
     // loading sensitive api config
-    sensitives = Gson().fromJson(File(cmdArgs.sensitiveApiConfig).bufferedReader(), object : TypeToken<List<BriefMethod>>() {}.type)
+    sensitives = Gson().fromJson(File(cmdArgs.sensitiveApiConfig).bufferedReader(), object : TypeToken<List<Node>>() {}.type)
 
-    for (method in sensitives) {
-        search(root.classes, method, method)
+    for (node in sensitives) {
+        search(root.classes, node, node)
     }
 
     output(cmdArgs)
@@ -91,25 +93,48 @@ private fun process(cmdArgs: CmdArgs): Int {
 
 private var found = false
 
-private fun search(classes: List<ClassNode>, targetNode: BriefMethod, leafNode: BriefMethod) {
-    var targetParentNode: BriefMethod? = null
+private fun search(classes: List<ClassNode>, targetNode: Node, leafNode: Node) {
+    var targetParentNode: Node? = null
     classes@ for (clsNode in classes) {
         methods@ for (methodNode in clsNode.methods) {
             if (methodNode.instructions == null) continue@methods
             instructions@ for (insnNode in methodNode.instructions) {
-                if (insnNode?.type != InsnType.INVOKE) continue@instructions
+                if (insnNode == null) continue@instructions
                 if (foundInsnNodeList.contains(insnNode)) continue@methods
-                val callMth: MethodInfo = (insnNode as InvokeNode).callMth
-                val cls = callMth.declClass.rawName
-                if (cls != targetNode.owner || callMth.shortId != targetNode.descriptor) continue@instructions
+                val owner: String
+                val name: String
+                val desc: String
+                if (targetNode == leafNode) {
+                    if (leafNode.descriptor.startsWith('(')) { // invoke-
+                        if (insnNode.type != InsnType.INVOKE) continue@instructions
+                        val callMth: MethodInfo = (insnNode as InvokeNode).callMth
+                        owner = callMth.declClass.rawName
+                        name = callMth.name
+                        desc = callMth.shortId.substring(callMth.shortId.indexOf('('))
+                    } else { // field
+                        if (insnNode.type != InsnType.SGET) continue@instructions
+                        val fieldInfo = (insnNode as IndexInsnNode).index as FieldInfo
+                        owner = fieldInfo.declClass.rawName
+                        name = fieldInfo.name
+                        desc = fieldInfo.shortId.substring(fieldInfo.shortId.indexOf(':') + 1)
+                    }
+                } else {
+                    if (insnNode.type != InsnType.INVOKE) continue@instructions
+                    val callMth: MethodInfo = (insnNode as InvokeNode).callMth
+                    owner = callMth.declClass.rawName
+                    name = callMth.name
+                    desc = callMth.shortId.substring(callMth.shortId.indexOf('('))
+                }
+                if (owner != targetNode.owner || name != targetNode.name || desc != targetNode.descriptor) continue@instructions
                 if (targetNode == leafNode) {
                     found = true
                     foundInsnNodeList.add(insnNode)
                     callChainList.add(leafNode)
                 }
-                targetParentNode = BriefMethod(
+                targetParentNode = Node(
                     methodNode.methodInfo.declClass.rawName,
-                    methodNode.methodInfo.shortId,
+                    methodNode.methodInfo.name,
+                    methodNode.methodInfo.shortId.substring(methodNode.methodInfo.shortId.indexOf('(')),
                 )
                 if (targetParentNode == targetNode) {
                     targetParentNode = null
@@ -140,15 +165,15 @@ private fun output(cmdArgs: CmdArgs) {
     BufferedWriter(FileWriter(outputFile, false)).use { writer ->
         var depth = 0
         for (i in callChainList.size - 1 downTo 0) {
-            val method = callChainList[i]
-            val isLeaf = sensitives.any { it.owner == method.owner && it.descriptor == method.descriptor }
+            val node = callChainList[i]
+            val isLeaf = sensitives.any { it.owner == node.owner && it.name == node.name && it.descriptor == node.descriptor }
             if (!isLeaf) {
-                val mappedClass = mappings?.classes?.getByFake(method.owner)
-                val owner = mappedClass?.realName ?: method.owner
-                val descriptor = mappedClass?.methods?.getByFake(method.descriptor)?.realName ?: method.descriptor
+                val mappedClass = mappings?.classes?.getByFake(node.owner)
+                val owner = mappedClass?.realName ?: node.owner
+                val descriptor = mappedClass?.methods?.getByFake("${node.name}${node.descriptor}")?.realName ?: node.descriptor
                 writer.appendLine(TAB.repeat(depth++) + "$owner.$descriptor")
             } else {
-                writer.appendLine(TAB.repeat(depth) + "${method.owner}.${method.descriptor}")
+                writer.appendLine(TAB.repeat(depth) + "${node.owner}.${node.name}${node.descriptor}")
                 writer.appendLine()
                 depth = 0
             }

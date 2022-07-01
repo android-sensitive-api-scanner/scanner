@@ -1,26 +1,37 @@
 [
   {
     "owner": "android.telephony.TelephonyManager",
-    "descriptor": "getImei()Ljava/lang/String;"
+    "name": "getImei",
+    "descriptor": "()Ljava/lang/String;"
   },
   {
     "owner": "android.telephony.TelephonyManager",
-    "descriptor": "getImei(I)Ljava/lang/String;"
+    "name": "getImei",
+    "descriptor": "(I)Ljava/lang/String;"
   },
   {
     "owner": "android.telephony.TelephonyManager",
-    "descriptor": "getDeviceId()Ljava/lang/String;"
+    "name": "getDeviceId",
+    "descriptor": "()Ljava/lang/String;"
   },
   {
     "owner": "android.telephony.TelephonyManager",
-    "descriptor": "getDeviceId(I)Ljava/lang/String;"
+    "name": "getDeviceId",
+    "descriptor": "(I)Ljava/lang/String;"
   },
   {
     "owner": "android.telephony.TelephonyManager",
-    "descriptor": "getMeid()Ljava/lang/String;"
+    "name": "getMeid",
+    "descriptor": "()Ljava/lang/String;"
   },
   {
     "owner": "android.telephony.TelephonyManager",
-    "descriptor": "getMeid(I)Ljava/lang/String;"
+    "name": "getMeid",
+    "descriptor": "(I)Ljava/lang/String;"
+  },
+  {
+    "owner": "android.os.Build",
+    "name": "BOARD",
+    "descriptor": "Ljava/lang/String;"
   }
 ]
