@@ -42,7 +42,6 @@ tasks.withType<Jar> {
 //    }
 
     configurations.runtimeClasspath.get().files.filter { it.exists() }.forEach { file: File ->
-        println(file)
         if (file.isDirectory) {
             from(file)
         } else {
