@@ -173,7 +173,11 @@ private fun output(cmdArgs: CmdArgs) {
                 val descriptor = mappedClass?.methods?.getByFake("${node.name}${node.descriptor}")?.realName ?: node.descriptor
                 writer.appendLine(TAB.repeat(depth++) + "$owner.$descriptor")
             } else {
-                writer.appendLine(TAB.repeat(depth) + "${node.owner}.${node.name}${node.descriptor}")
+                if(node.descriptor.startsWith('(')) {
+                    writer.appendLine(TAB.repeat(depth) + "${node.owner}.${node.name}${node.descriptor}")
+                } else {
+                    writer.appendLine(TAB.repeat(depth) + "${node.owner}.${node.name}:${node.descriptor}")
+                }
                 writer.appendLine()
                 depth = 0
             }
