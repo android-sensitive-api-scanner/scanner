@@ -18,7 +18,7 @@ Examples:
 
 比如我们要扫描哔哩哔哩的 apk，配置好想要扫描的方法配置文件 config.json，新建扫描结果输出目录 output：
 
-![20221011201940813](assets\20221011201940813.png)
+![20221011201940813](assets/20221011201940813.png)
 
 在命令行输入：
 
@@ -28,12 +28,13 @@ java -jar android-sensitive-api-scanner.jar -json config.json -d output bilibi.a
 
 稍等片刻（p.s. 扫描时间的快慢取决于被扫描的 apk 的工程代码量）后，即可生成输出结果，内容形如：
 
-com.bilibili.biligame.api.interceptor.b.(Ljava/util/Map;)V
-   com.bilibili.biligame.track.utils.a.()Ljava/util/Map;
-      com.bilibili.biligame.track.utils.a.()Ljava/lang/String;
-         com.bilibili.droid.PhoneUtils.(Landroid/content/Context;)Ljava/lang/String;
-            com.bilibili.droid.PhoneUtils.(Landroid/content/Context;Z)Ljava/lang/String;
-               com.bilibili.privacy.Privacy.(Landroid/telephony/TelephonyManager;I)Ljava/lang/String;
-                  android.telephony.TelephonyManager.getImei(I)Ljava/lang/String;
+>com.bilibili.biligame.api.interceptor.b.(Ljava/util/Map;)V
+>   com.bilibili.biligame.track.utils.a.()Ljava/util/Map;
+>      com.bilibili.biligame.track.utils.a.()Ljava/lang/String;
+>         com.bilibili.droid.PhoneUtils.(Landroid/content/Context;)Ljava/lang/String;
+>            com.bilibili.droid.PhoneUtils.(Landroid/content/Context;Z)Ljava/lang/String;
+>               com.bilibili.privacy.Privacy.(Landroid/telephony/TelephonyManager;I)Ljava/lang/String;
+>                  android.telephony.TelephonyManager.getImei(I)Ljava/lang/String;
 
 这里只是拿第三方的 apk 举例，如果想扫描自己工程的 apk，可以指定 mapping 文件，这样扫描出来的结果就是反混淆后的原始代码。
+
