@@ -16,7 +16,7 @@ Examples:
 
 ## Example
 
-比如我们要扫描哔哩哔哩的 apk，配置好想要扫描的方法配置文件 config.json，新建扫描结果输出目录 output：
+比如我们要扫描哔哩哔哩的 apk，配置好想要扫描的方法配置文件 config.json：
 
 ![20221011201940813](assets/20221011201940813.png)
 
