@@ -161,7 +161,8 @@ private fun output(cmdArgs: CmdArgs) {
         mappings = Parsers[Parsers.PRO_GUARD]?.parse(File(mappingFile).toURI())
     }
 
-    val outputFile = File(cmdArgs.outputDir, "output_${System.currentTimeMillis()}.txt")
+    val outputDir = File(cmdArgs.outputDir).also { it.mkdir() }
+    val outputFile = File(outputDir, "output_${System.currentTimeMillis()}.txt")
     BufferedWriter(FileWriter(outputFile, false)).use { writer ->
         var depth = 0
         for (i in callChainList.size - 1 downTo 0) {
