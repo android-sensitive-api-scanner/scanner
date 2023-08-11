@@ -2,6 +2,10 @@
 
 这是一个命令行工具，用于针对 apk 文件进行静态扫描方法引用链。配置想要被扫描的方法请见[这里](https://github.com/porum/android-sensitive-api-scanner/blob/master/scanner/src/test/resources/sensitive-api.json)。类图的构建基于 [jadx](https://github.com/skylot/jadx) 。
 
+## Requirements
+
+- #### JDK11+
+
 ## Usage
 ```
 java -jar asas.jar [options] <input files> (.apk)
