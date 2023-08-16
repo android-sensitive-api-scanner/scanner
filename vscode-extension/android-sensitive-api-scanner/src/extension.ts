@@ -44,9 +44,6 @@ export function activate(context: vscode.ExtensionContext) {
 				fs.rmSync(apiFile);
 			}
 
-			vscode.window.showInformationMessage(`output dir: ${outputDir}`);
-			vscode.window.showInformationMessage(`api file: ${apiFile}`);
-
 
 			const configuration = vscode.workspace.getConfiguration();
 			const jarPath = configuration.get("jarPath");
