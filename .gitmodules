@@ -1,0 +1,3 @@
+[submodule "vscode-extension"]
+	path = vscode-extension
+	url = https://github.com/android-sensitive-api-scanner/vscode-extension.git
