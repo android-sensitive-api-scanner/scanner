@@ -32,4 +32,4 @@ allprojects {
 }
 
 group = "io.github.porum"
-version = "1.0.1"
+version = "1.0.2"

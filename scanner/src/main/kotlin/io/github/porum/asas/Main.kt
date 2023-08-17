@@ -82,7 +82,11 @@ private fun process(cmdArgs: CmdArgs): Int {
     // loading sensitive api config
     sensitives = Gson().fromJson(File(cmdArgs.sensitiveApiConfig).bufferedReader(), object : TypeToken<List<Node>>() {}.type)
 
-    for (node in sensitives) {
+
+    val size = sensitives.size
+    for (i in 0 until size) {
+        val node = sensitives[i]
+        println("[${i + 1}/$size] searching ${node.owner}.${node.name}")
         search(root.classes, node, node)
     }
 
@@ -184,4 +188,6 @@ private fun output(cmdArgs: CmdArgs) {
             }
         }
     }
+
+    println(outputFile.absolutePath)
 }
